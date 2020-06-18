@@ -1,0 +1,47 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt: update_cache=yes name=docker-ce state=latest
+
+    - name: Install docker-compose
+      shell: curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+
+    - name: Install mail dockers and stuff
+      shell: curl -o setup.sh https://raw.githubusercontent.com/tomav/docker-mailserver/master/setup.sh && chmod a+x ./setup.sh && curl -o docker-compose.yml https://raw.githubusercontent.com/tomav/docker-mailserver/master/docker-compose.yml.dist && curl -o .env https://raw.githubusercontent.com/tomav/docker-mailserver/master/.env.dist && curl -o env-mailserver https://raw.githubusercontent.com/tomav/docker-mailserver/master/env-mailserver.dist
+      args:
+        chdir: /root
+        creates: /root/.env
+
+    - name: certbot ppa
+      apt_repository:
+        repo: ppa:certbot/certbot
+
+    - name: Install certbot
+      apt: update_cache=yes name=certbot state=latest
+
+
+
+
+
+
+
